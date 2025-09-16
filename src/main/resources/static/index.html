@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<header>Medicine Stock Dashboard</header>
+
+<div class="container">
+    <div class="dashboard-buttons">
+        <button id="addMedicineBtn">Add Medicine</button>
+    </div>
+
+    <div class="inventory-table">
+        <h2>Medicines</h2>
+        <table id="medicineTable">
+            <thead>
+            <tr>
+                <th>MedicineID</th>
+                <th>Name</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="medicineModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Add Medicine</h3>
+        <input type="text" id="medicineID" placeholder="Medicine ID">
+        <input type="text" id="name" placeholder="Medicine Name">
+        <input type="text" id="brand" placeholder="Brand">
+        <input type="number" id="price" placeholder="Price">
+        <input type="number" id="quantity" placeholder="Quantity">
+        <input type="date" id="expiry" placeholder="Expiry Date">
+        <button onclick="addMedicine()">Add Medicine</button>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('medicineModal');
+    const btn = document.getElementById('addMedicineBtn');
+    const span = document.getElementsByClassName('close')[0];
+    const medicineTable = document.getElementById('medicineTable').getElementsByTagName('tbody')[0];
+    let medicines = [];
+
+    btn.onclick = () => modal.style.display = 'block';
+    span.onclick = () => modal.style.display = 'none';
+    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; }
+
+    function addMedicine() {
+        const medicineID = document.getElementById('medicineID').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const brand = document.getElementById('brand').value.trim();
+        const price = parseFloat(document.getElementById('price').value);
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const expiry = document.getElementById('expiry').value;
+
+        if (!medicineID || !name || !brand || isNaN(price) || isNaN(quantity) || !expiry) {
+            alert('Please fill all fields correctly');
+            return;
+        }
+
+        const status = quantity > 0 ? 'In Stock' : 'Out of Stock';
+        medicines.push({ medicineID, name, brand, price, quantity, expiry, status });
+        renderTable();
+        modal.style.display = 'none';
+
+        // Clear inputs
+        document.getElementById('medicineID').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('brand').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('quantity').value = '';
+        document.getElementById('expiry').value = '';
+    }
+
+    function deleteMedicine(id) {
+        medicines = medicines.filter(m => m.medicineID !== id);
+        renderTable();
+    }
+
+    function renderTable() {
+        medicineTable.innerHTML = '';
+        medicines.forEach(m => {
+            const row = medicineTable.insertRow();
+            row.innerHTML = `
+          <td>${m.medicineID}</td>
+          <td>${m.name}</td>
+          <td>${m.brand}</td>
+          <td>${m.price.toFixed(2)}</td>
+          <td>${m.quantity}</td>
+          <td>${m.expiry}</td>
+          <td class="${m.status === 'In Stock' ? 'status-in' : 'status-out'}">${m.status}</td>
+          <td><button class="delete-btn" onclick="deleteMedicine('${m.medicineID}')">Delete</button></td>
+        `;
+        });
+    }
+</script>
+</body>
+</html>
