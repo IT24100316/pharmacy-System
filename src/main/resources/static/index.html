@@ -26,7 +26,6 @@
                 <th>Quantity</th>
                 <th>Expiry Date</th>
                 <th>Status</th>
-                <th>Action</th>
             </tr>
             </thead>
             <tbody></tbody>
@@ -56,10 +55,24 @@
     const medicineTable = document.getElementById('medicineTable').getElementsByTagName('tbody')[0];
     let medicines = [];
 
+    // Open modal
     btn.onclick = () => modal.style.display = 'block';
+    // Close modal
     span.onclick = () => modal.style.display = 'none';
     window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; }
 
+    // Fetch existing medicines on page load
+    window.onload = () => {
+        fetch('http://localhost:8080/api/medicines')
+            .then(res => res.json())
+            .then(data => {
+                medicines = data;
+                renderTable();
+            })
+            .catch(err => console.error('Error fetching medicines:', err));
+    }
+
+    // Add medicine function
     function addMedicine() {
         const medicineID = document.getElementById('medicineID').value.trim();
         const name = document.getElementById('name').value.trim();
@@ -73,10 +86,18 @@
             return;
         }
 
-        const status = quantity > 0 ? 'In Stock' : 'Out of Stock';
-        medicines.push({ medicineID, name, brand, price, quantity, expiry, status });
-        renderTable();
-        modal.style.display = 'none';
+        fetch('http://localhost:8080/api/medicines', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ medicineID, name, brand, price, quantity, expiry })
+        })
+            .then(response => response.json())
+            .then(data => {
+                medicines.push(data);
+                renderTable();
+                modal.style.display = 'none';
+            })
+            .catch(err => console.error('Error adding medicine:', err));
 
         // Clear inputs
         document.getElementById('medicineID').value = '';
@@ -87,11 +108,7 @@
         document.getElementById('expiry').value = '';
     }
 
-    function deleteMedicine(id) {
-        medicines = medicines.filter(m => m.medicineID !== id);
-        renderTable();
-    }
-
+    // Render table function
     function renderTable() {
         medicineTable.innerHTML = '';
         medicines.forEach(m => {
@@ -104,7 +121,6 @@
           <td>${m.quantity}</td>
           <td>${m.expiry}</td>
           <td class="${m.status === 'In Stock' ? 'status-in' : 'status-out'}">${m.status}</td>
-          <td><button class="delete-btn" onclick="deleteMedicine('${m.medicineID}')">Delete</button></td>
         `;
         });
     }
