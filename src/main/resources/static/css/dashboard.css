@@ -86,20 +86,6 @@ th {
     font-weight: bold;
 }
 
-.delete-btn {
-    color: white;
-    background-color: #dc3545;
-    border: none;
-    padding: 0.35rem 0.7rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.delete-btn:hover {
-    background-color: #c82333;
-}
-
 /* Modal Styles */
 .modal {
     display: none;
