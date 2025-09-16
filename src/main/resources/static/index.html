@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
+
 <header>Medicine Stock Dashboard</header>
 
 <div class="container">
@@ -33,6 +34,9 @@
     </div>
 </div>
 
+<!-- Toast container -->
+<div id="toastContainer" class="toast-container"></div>
+
 <!-- Modal -->
 <div id="medicineModal" class="modal">
     <div class="modal-content">
@@ -55,13 +59,12 @@
     const medicineTable = document.getElementById('medicineTable').getElementsByTagName('tbody')[0];
     let medicines = [];
 
-    // Open modal
+    // Open/close modal
     btn.onclick = () => modal.style.display = 'block';
-    // Close modal
     span.onclick = () => modal.style.display = 'none';
     window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; }
 
-    // Fetch existing medicines on page load
+    // Fetch medicines on page load
     window.onload = () => {
         fetch('http://localhost:8080/api/medicines')
             .then(res => res.json())
@@ -72,7 +75,17 @@
             .catch(err => console.error('Error fetching medicines:', err));
     }
 
-    // Add medicine function
+    // Show toast function
+    function showToast(message, type) {
+        const toastContainer = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerText = message;
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Add medicine
     function addMedicine() {
         const medicineID = document.getElementById('medicineID').value.trim();
         const name = document.getElementById('name').value.trim();
@@ -82,7 +95,7 @@
         const expiry = document.getElementById('expiry').value;
 
         if (!medicineID || !name || !brand || isNaN(price) || isNaN(quantity) || !expiry) {
-            alert('Please fill all fields correctly');
+            showToast('Please fill all fields correctly', 'low');
             return;
         }
 
@@ -108,22 +121,45 @@
         document.getElementById('expiry').value = '';
     }
 
-    // Render table function
+    // Render table with updated status
     function renderTable() {
         medicineTable.innerHTML = '';
+        const today = new Date().toISOString().split('T')[0];
+
         medicines.forEach(m => {
             const row = medicineTable.insertRow();
+            let statusText = '';
+            let statusClass = '';
+
+            if (m.expiry < today) {
+                statusText = 'Expired';
+                statusClass = 'status-expired';
+                showToast(`Medicine "${m.name}" (Brand: ${m.brand}) has expired!`, 'expired');
+            } else if (m.quantity === 0) {
+                statusText = 'Out of Stock';
+                statusClass = 'status-out';
+                showToast(`Medicine "${m.name}" (Brand: ${m.brand}) is out of stock!`, 'out');
+            } else if (m.quantity <= 5) {
+                statusText = 'Low Stock';
+                statusClass = 'status-low';
+                showToast(`Medicine "${m.name}" (Brand: ${m.brand}) is low in stock!`, 'low');
+            } else {
+                statusText = 'In Stock';
+                statusClass = 'status-in';
+            }
+
             row.innerHTML = `
-          <td>${m.medicineID}</td>
-          <td>${m.name}</td>
-          <td>${m.brand}</td>
-          <td>${m.price.toFixed(2)}</td>
-          <td>${m.quantity}</td>
-          <td>${m.expiry}</td>
-          <td class="${m.status === 'In Stock' ? 'status-in' : 'status-out'}">${m.status}</td>
+            <td>${m.medicineID}</td>
+            <td>${m.name}</td>
+            <td>${m.brand}</td>
+            <td>${m.price.toFixed(2)}</td>
+            <td>${m.quantity}</td>
+            <td>${m.expiry}</td>
+            <td class="${statusClass}">${statusText}</td>
         `;
         });
     }
+
 </script>
 </body>
 </html>
