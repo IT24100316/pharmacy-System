@@ -7,13 +7,14 @@
     <link rel="stylesheet" href="/css/dashboard.css">
     <style>
         /* Toast types update for clarity */
-        .toast-success { background-color: #28a745; } /* green */
-        .toast-error   { background-color: #dc3545; } /* red */
-        .toast-low     { background-color: #ffc107; color: #000; } /* yellow with black text */
-        .toast-out     { background-color: #ff6f61; } /* orange/red */
-        .toast-expired { background-color: #6c757d; } /* gray */
-        .toast-info    { background-color: rgba(0,0,0,0.85); color: white; } /* dark solid for clarity */
-        #searchInput { width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 1rem; }
+        .toast-success { background-color: #28a745; }
+        .toast-error   { background-color: #dc3545; }
+        .toast-low     { background-color: #ffc107; color: #000; }
+        .toast-out     { background-color: #ff6f61; }
+        .toast-expired { background-color: #6c757d; }
+        .toast-info    { background-color: rgba(0,0,0,0.85); color: white; }
+
+        #searchInput { width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 5px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
@@ -28,8 +29,17 @@
     <div class="inventory-table">
         <h2>Medicines</h2>
 
-        <!-- Search Bar -->
-        <input type="text" id="searchInput" placeholder="Search medicine by name...">
+        <!-- Search and Sort -->
+        <div style="display:flex; gap:1rem; margin-bottom:1rem; align-items:center;">
+            <input type="text" id="searchInput" placeholder="Search medicine by name..." style="flex:1;">
+            <select id="sortSelect" style="padding:0.5rem; font-size:1rem; border-radius:5px; border:1px solid #ccc;">
+                <option value="">Sort by...</option>
+                <option value="nameAsc">Name (A→Z)</option>
+                <option value="nameDesc">Name (Z→A)</option>
+                <option value="expiryAsc">Expiry Date (Soonest First)</option>
+                <option value="expiryDesc">Expiry Date (Latest First)</option>
+            </select>
+        </div>
 
         <table id="medicineTable">
             <thead>
@@ -89,6 +99,7 @@
     const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
     const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
     const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
 
     let medicines = [];
     let modalMode = 'add';
@@ -281,6 +292,19 @@
         renderTable(filtered);
     });
 
+    // --- Sort functionality ---
+    sortSelect.onchange = () => {
+        const value = sortSelect.value;
+        if(value === 'nameAsc') medicines.sort((a,b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+        else if(value === 'nameDesc') medicines.sort((a,b) => b.name.toLowerCase().localeCompare(a.name.toLowerCase()));
+        else if(value === 'expiryAsc') medicines.sort((a,b) => new Date(a.expiry) - new Date(b.expiry));
+        else if(value === 'expiryDesc') medicines.sort((a,b) => new Date(b.expiry) - new Date(a.expiry));
+
+        // Apply search filter after sorting
+        const filter = searchInput.value.toLowerCase();
+        const filtered = medicines.filter(m => m.name.toLowerCase().includes(filter));
+        renderTable(filtered);
+    };
 </script>
 
 </body>
