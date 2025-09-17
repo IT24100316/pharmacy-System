@@ -2,6 +2,7 @@ package com.system.stock.management.controller;
 
 import com.system.stock.management.entity.Medicine;
 import com.system.stock.management.service.MedicineService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,5 +26,19 @@ public class MedicineController {
     @PostMapping
     public Medicine addMedicine(@RequestBody Medicine medicine) {
         return service.saveMedicine(medicine);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteMedicine(
+            @RequestParam String medicineID,
+            @RequestParam String brand) {
+
+        boolean deleted = service.deleteMedicine(medicineID, brand);
+
+        if (deleted) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(404).build();
+        }
     }
 }
