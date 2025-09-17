@@ -85,7 +85,7 @@
         setTimeout(() => toast.remove(), 4000);
     }
 
-    // Add medicine
+    // Add medicine with duplicate check
     function addMedicine() {
         const medicineID = document.getElementById('medicineID').value.trim();
         const name = document.getElementById('name').value.trim();
@@ -96,6 +96,13 @@
 
         if (!medicineID || !name || !brand || isNaN(price) || isNaN(quantity) || !expiry) {
             showToast('Please fill all fields correctly', 'low');
+            return;
+        }
+
+        // ✅ DUPLICATE CHECK BEFORE ADDING
+        const duplicate = medicines.some(m => m.medicineID === medicineID && m.brand === brand);
+        if (duplicate) {
+            showToast(`Medicine with ID "${medicineID}" and Brand "${brand}" already exists!`, 'error');
             return;
         }
 
@@ -119,6 +126,26 @@
         document.getElementById('price').value = '';
         document.getElementById('quantity').value = '';
         document.getElementById('expiry').value = '';
+    }
+
+    //delete medicine
+    function deleteMedicine(medicineID, brand) {
+        fetch(`http://localhost:8080/api/medicines?medicineID=${encodeURIComponent(medicineID)}&brand=${encodeURIComponent(brand)}`, {
+            method: 'DELETE'
+        })
+            .then(res => {
+                if (res.ok) {
+                    showToast(`Medicine "${medicineID}" (${brand}) deleted successfully!`, 'success');
+                    medicines = medicines.filter(m => !(m.medicineID === medicineID && m.brand === brand));
+                    renderTable();
+                } else {
+                    showToast(`Failed to delete medicine "${medicineID}" (${brand})`, 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast(`Failed to delete medicine "${medicineID}" (${brand})`, 'error');
+            });
     }
 
     // Render table with updated status
@@ -149,17 +176,21 @@
             }
 
             row.innerHTML = `
-            <td>${m.medicineID}</td>
-            <td>${m.name}</td>
-            <td>${m.brand}</td>
-            <td>${m.price.toFixed(2)}</td>
-            <td>${m.quantity}</td>
-            <td>${m.expiry}</td>
-            <td class="${statusClass}">${statusText}</td>
-        `;
+    <td>${m.medicineID}</td>
+    <td>${m.name}</td>
+    <td>${m.brand}</td>
+    <td>${m.price.toFixed(2)}</td>
+    <td>${m.quantity}</td>
+    <td>${m.expiry}</td>
+    <td class="${statusClass}">${statusText}</td>
+    <td>
+        <button class="delete-btn" onclick="deleteMedicine('${m.medicineID}', '${m.brand}')">
+            🗑️ Delete
+        </button>
+    </td>
+`;
         });
     }
-
 </script>
 </body>
 </html>
