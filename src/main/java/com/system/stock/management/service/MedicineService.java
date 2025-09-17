@@ -16,27 +16,37 @@ public class MedicineService {
         this.repository = repository;
     }
 
+    // ✅ Save medicine with duplicate check
     public Medicine saveMedicine(Medicine medicine) {
-        Optional<Medicine> existing = repository.findByMedicineIDAndBrand(medicine.getMedicineID(), medicine.getBrand());
+        Optional<Medicine> existing = repository.findByMedicineIDAndBrand(
+                medicine.getMedicineID(), medicine.getBrand());
+
         if (existing.isPresent()) {
-            throw new RuntimeException("Medicine with same ID and Brand already exists!");
+            throw new RuntimeException("Medicine with the same ID and Brand already exists!");
         }
-        medicine.setStatus(medicine.getQuantity() > 0 ? "In Stock" : "Out of Stock");
+
+        // Set status before saving
+        if (medicine.getQuantity() <= 0) {
+            medicine.setStatus("Out of Stock");
+        } else {
+            medicine.setStatus("In Stock");
+        }
+
         return repository.save(medicine);
     }
 
+    // ✅ Fetch all medicines
     public List<Medicine> getAllMedicines() {
         return repository.findAll();
     }
 
-    // Delete medicine by ID and Brand
+    // ✅ Delete medicine by ID + Brand
     public boolean deleteMedicine(String medicineID, String brand) {
         Optional<Medicine> med = repository.findByMedicineIDAndBrand(medicineID, brand);
         if (med.isPresent()) {
             repository.delete(med.get());
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 }
