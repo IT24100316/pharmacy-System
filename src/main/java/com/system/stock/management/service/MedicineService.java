@@ -1,9 +1,11 @@
 package com.system.stock.management.service;
 
+import com.system.stock.management.dto.MedicineDTO;
 import com.system.stock.management.entity.Medicine;
 import com.system.stock.management.repository.MedicineRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,4 +51,23 @@ public class MedicineService {
         }
         return false;
     }
+
+    public Medicine updateMedicine(MedicineDTO dto) {
+        Optional<Medicine> optional = repository.findByMedicineIDAndBrand(dto.getMedicineID(), dto.getBrand());
+        if (optional.isEmpty()) {
+            throw new RuntimeException("Medicine not found");
+        }
+
+        Medicine medicine = optional.get();
+        medicine.setName(dto.getName());
+        medicine.setPrice(dto.getPrice());
+        medicine.setQuantity(dto.getQuantity());
+        medicine.setExpiry(dto.getExpiry());
+        medicine.setStatus(dto.getQuantity() > 0 ? "In Stock" : "Out of Stock");
+
+        return repository.save(medicine);
+    }
+
+
+
 }

@@ -36,12 +36,11 @@ public class MedicineController {
             medicine.setBrand(dto.getBrand());
             medicine.setPrice(dto.getPrice());
             medicine.setQuantity(dto.getQuantity());
-            medicine.setExpiry(dto.getExpiry());
+            medicine.setExpiry(dto.getExpiry()); // directly assign
 
-            Medicine savedMedicine = service.saveMedicine(medicine);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedMedicine);
+            return ResponseEntity.ok(service.saveMedicine(medicine));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -58,6 +57,16 @@ public class MedicineController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Medicine with given ID and Brand not found!");
+        }
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateMedicine(@RequestBody MedicineDTO dto) {
+        try {
+            Medicine updated = service.updateMedicine(dto); // service method
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }
