@@ -13,6 +13,7 @@
         .toast-out     { background-color: #ff6f61; } /* orange/red */
         .toast-expired { background-color: #6c757d; } /* gray */
         .toast-info    { background-color: rgba(0,0,0,0.85); color: white; } /* dark solid for clarity */
+        #searchInput { width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -26,6 +27,10 @@
 
     <div class="inventory-table">
         <h2>Medicines</h2>
+
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" placeholder="Search medicine by name...">
+
         <table id="medicineTable">
             <thead>
             <tr>
@@ -80,34 +85,25 @@
     const span = document.getElementsByClassName('close')[0];
     const medicineTable = document.getElementById('medicineTable').getElementsByTagName('tbody')[0];
     const modalActionBtn = document.getElementById('modalActionBtn');
-
     const deleteModal = document.getElementById("deleteModal");
     const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
     const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
-    let deleteID = null;
-    let deleteBrand = null;
+    const searchInput = document.getElementById('searchInput');
 
     let medicines = [];
     let modalMode = 'add';
     let currentUpdateID = null;
     let currentUpdateBrand = null;
+    let deleteID = null;
+    let deleteBrand = null;
 
-    // Open Add Modal
     btn.onclick = () => openModal('add');
-
-    // Close Add/Update modal
     span.onclick = () => modal.style.display = 'none';
-
-    // Close modals if clicked outside
-    window.onclick = function(e) {
-        if (e.target === modal) modal.style.display = 'none';
-        if (e.target === deleteModal) deleteModal.style.display = 'none';
+    window.onclick = e => {
+        if(e.target === modal) modal.style.display = 'none';
+        if(e.target === deleteModal) deleteModal.style.display = 'none';
     };
-
-    // Fetch medicines on page load
     window.onload = fetchMedicines;
-
-    // --- FUNCTIONS ---
 
     function fetchMedicines() {
         fetch('http://localhost:8080/api/medicines')
@@ -141,39 +137,33 @@
     function openModal(mode, medicineID=null, brand=null) {
         modalMode = mode;
         clearModal();
-
-        if (mode === 'add') {
+        if(mode==='add') {
             modalActionBtn.innerText = 'Add Medicine';
-            document.getElementById('medicineID').readOnly = false;
-            document.getElementById('brand').readOnly = false;
-        } else if (mode === 'update') {
-            modalActionBtn.innerText = 'Update Medicine';
-            const med = medicines.find(m => m.medicineID === medicineID && m.brand === brand);
-            if (!med) return;
-
+            document.getElementById('medicineID').readOnly=false;
+            document.getElementById('brand').readOnly=false;
+        } else {
+            modalActionBtn.innerText='Update Medicine';
+            const med = medicines.find(m => m.medicineID===medicineID && m.brand===brand);
+            if(!med) return;
             currentUpdateID = med.medicineID;
             currentUpdateBrand = med.brand;
-
             document.getElementById('medicineID').value = med.medicineID;
             document.getElementById('name').value = med.name;
             document.getElementById('brand').value = med.brand;
             document.getElementById('price').value = med.price;
             document.getElementById('quantity').value = med.quantity;
             document.getElementById('expiry').value = med.expiry;
-
             document.getElementById('medicineID').readOnly = true;
             document.getElementById('brand').readOnly = true;
         }
-
-        modal.style.display = 'block';
+        modal.style.display='block';
     }
 
     modalActionBtn.onclick = () => {
-        if (modalMode === 'add') addMedicine();
-        else if (modalMode === 'update') updateMedicine();
+        if(modalMode==='add') addMedicine();
+        else if(modalMode==='update') updateMedicine();
     };
 
-    // --- CRUD FUNCTIONS ---
     function addMedicine() {
         const dto = {
             medicineID: document.getElementById('medicineID').value.trim(),
@@ -183,26 +173,21 @@
             quantity: parseInt(document.getElementById('quantity').value),
             expiry: document.getElementById('expiry').value
         };
-
-        if (!dto.medicineID || !dto.name || !dto.brand || isNaN(dto.price) || isNaN(dto.quantity) || !dto.expiry) {
-            showToast('Please fill all fields correctly', 'low');
-            return;
+        if(!dto.medicineID || !dto.name || !dto.brand || isNaN(dto.price) || isNaN(dto.quantity) || !dto.expiry) {
+            showToast('Please fill all fields correctly','low'); return;
         }
-
-        fetch('http://localhost:8080/api/medicines', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        })
-            .then(res => res.json())
-            .then(data => {
+        fetch('http://localhost:8080/api/medicines',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(dto)
+        }).then(res=>res.json())
+            .then(data=>{
                 medicines.push(data);
                 renderTable();
-                modal.style.display = 'none';
-                showToast('Medicine added successfully', 'success');
+                modal.style.display='none';
+                showToast('Medicine added successfully','success');
                 showStatusAlerts();
-            })
-            .catch(err => showToast('Error adding medicine', 'error'));
+            }).catch(err=>showToast('Error adding medicine','error'));
     }
 
     function updateMedicine() {
@@ -214,60 +199,47 @@
             quantity: parseInt(document.getElementById('quantity').value),
             expiry: document.getElementById('expiry').value
         };
-
-        fetch('http://localhost:8080/api/medicines', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
+        fetch('http://localhost:8080/api/medicines',{
+            method:'PUT',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(dto)
         })
-            .then(res => { if(!res.ok) throw new Error('Failed to update medicine'); return res.json(); })
-            .then(updated => {
-                medicines = medicines.map(m => (m.medicineID === currentUpdateID && m.brand === currentUpdateBrand ? updated : m));
+            .then(res=>{ if(!res.ok) throw new Error('Failed to update medicine'); return res.json(); })
+            .then(updated=>{
+                medicines = medicines.map(m => (m.medicineID===currentUpdateID && m.brand===currentUpdateBrand ? updated : m));
                 renderTable();
-                modal.style.display = 'none';
-                modalMode = 'add';
-                currentUpdateID = null;
-                currentUpdateBrand = null;
-                showToast('Medicine updated successfully', 'success');
+                modal.style.display='none';
+                modalMode='add';
+                currentUpdateID=null;
+                currentUpdateBrand=null;
+                showToast('Medicine updated successfully','success');
                 showStatusAlerts();
-            })
-            .catch(err => showToast(err.message, 'error'));
+            }).catch(err=>showToast(err.message,'error'));
     }
 
-    // --- Delete Functions ---
     function showDeleteModal(medicineID, brand) {
-        deleteID = medicineID;
-        deleteBrand = brand;
-        deleteModal.style.display = "block";
+        deleteID=medicineID; deleteBrand=brand;
+        deleteModal.style.display="block";
     }
 
-    confirmDeleteBtn.onclick = () => {
-        deleteMedicine(deleteID, deleteBrand);
-        deleteModal.style.display = "none";
-    };
-
-    cancelDeleteBtn.onclick = () => {
-        deleteModal.style.display = "none";
-        showToast('Deletion cancelled','info'); // now clearly visible
-    };
+    confirmDeleteBtn.onclick = () => { deleteMedicine(deleteID, deleteBrand); deleteModal.style.display="none"; };
+    cancelDeleteBtn.onclick = () => { deleteModal.style.display="none"; showToast('Deletion cancelled','info'); };
 
     function deleteMedicine(medicineID, brand) {
-        fetch(`http://localhost:8080/api/medicines?medicineID=${encodeURIComponent(medicineID)}&brand=${encodeURIComponent(brand)}`, {
-            method: 'DELETE'
-        })
-            .then(res => {
-                if(res.ok){
-                    medicines = medicines.filter(m => !(m.medicineID===medicineID && m.brand===brand));
-                    renderTable();
-                    showToast('Medicine deleted successfully','success');
-                } else showToast('Failed to delete medicine','error');
-            })
-            .catch(err => showToast('Failed to delete medicine','error'));
+        fetch(`http://localhost:8080/api/medicines?medicineID=${encodeURIComponent(medicineID)}&brand=${encodeURIComponent(brand)}`,{
+            method:'DELETE'
+        }).then(res=>{
+            if(res.ok){
+                medicines = medicines.filter(m => !(m.medicineID===medicineID && m.brand===brand));
+                renderTable();
+                showToast('Medicine deleted successfully','success');
+            } else showToast('Failed to delete medicine','error');
+        }).catch(err=>showToast('Failed to delete medicine','error'));
     }
 
-    function renderTable() {
-        medicineTable.innerHTML = '';
-        medicines.forEach(m => {
+    function renderTable(data=medicines) {
+        medicineTable.innerHTML='';
+        data.forEach(m=>{
             const today = new Date().toISOString().split('T')[0];
             const expiryDate = m.expiry.split('T')[0];
             let statusText='', statusClass='';
@@ -277,7 +249,7 @@
             else { statusText='In Stock'; statusClass='status-in'; }
 
             const row = medicineTable.insertRow();
-            row.innerHTML = `
+            row.innerHTML=`
             <td>${m.medicineID}</td>
             <td>${m.name}</td>
             <td>${m.brand}</td>
@@ -288,8 +260,7 @@
             <td>
                 <button class="update-btn" onclick="openModal('update','${m.medicineID}','${m.brand}')"> ✏️ </button>
                 <button class="delete-btn" onclick="showDeleteModal('${m.medicineID}','${m.brand}')"> 🗑️ </button>
-            </td>
-        `;
+            </td>`;
         });
     }
 
@@ -302,6 +273,14 @@
             else if(m.quantity<=5) showToast(`Medicine "${m.name}" (Brand: ${m.brand}) is low in stock!`,'low');
         });
     }
+
+    // --- Search functionality ---
+    searchInput.addEventListener('input', () => {
+        const filter = searchInput.value.toLowerCase();
+        const filtered = medicines.filter(m => m.name.toLowerCase().includes(filter));
+        renderTable(filtered);
+    });
+
 </script>
 
 </body>
