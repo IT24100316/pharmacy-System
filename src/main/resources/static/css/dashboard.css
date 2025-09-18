@@ -86,6 +86,63 @@ th {
     font-weight: bold;
 }
 
+/* Table Buttons Container */
+td > .update-btn,
+td > .delete-btn {
+    margin-bottom: 6px; /* space between stacked buttons */
+    width: 80px;         /* uniform width */
+    height: 40px;        /* uniform height */
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Delete Button */
+.delete-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.delete-btn:hover {
+    background-color: #e60000;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.delete-btn:active {
+    background-color: #cc0000;
+    transform: scale(0.95);
+}
+
+/* Update Button */
+.update-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.update-btn:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.update-btn:active {
+    background-color: #3e8e41;
+    transform: scale(0.95);
+}
+
 /* Modal Styles */
 .modal {
     display: none;
@@ -181,7 +238,7 @@ th {
     }
 }
 
-/*alert system*/
+/* Alert system */
 .status-low {
     color: orange;
     font-weight: bold;
@@ -206,22 +263,21 @@ th {
 
 .toast {
     padding: 0.8rem 1.2rem;
-    border-radius: 5px;
+    border-radius: 6px;
     color: white;
     font-weight: bold;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    opacity: 0.95;
-    animation: slideIn 0.30s ease forwards;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    opacity: 1;
+    border: 1px solid rgba(0,0,0,0.2);
+    min-width: 250px;
+    animation: slideIn 0.3s ease forwards;
 }
 
-.toast-expired {
-    background-color: #dc3545; /* red */
-}
-
-.toast-low {
-    background-color: #ffc107; /* yellow */
-    color: black;
-}
+.toast-success { background-color: #28a745; }
+.toast-error   { background-color: #dc3545; }
+.toast-low     { background-color: #ffc107; color: #000; }
+.toast-out     { background-color: #ff6f61; }
+.toast-expired { background-color: #6c757d; }
 
 @keyframes slideIn {
     from {
@@ -229,34 +285,7 @@ th {
         transform: translateX(100%);
     }
     to {
-        opacity: 0.95;
+        opacity: 1;
         transform: translateX(0);
     }
 }
-/*delete button*/
-.delete-btn {
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.delete-btn:hover {
-    background-color: #e60000;
-    transform: scale(1.05);
-}
-
-.delete-btn:active {
-    background-color: #cc0000;
-    transform: scale(0.95);
-}
-
-
