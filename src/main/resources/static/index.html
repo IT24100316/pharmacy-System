@@ -15,6 +15,12 @@
         .toast-info    { background-color: rgba(0,0,0,0.85); color: white; }
 
         #searchInput { width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 5px; border: 1px solid #ccc; }
+
+        /* Reason Modal (CSS minimal, you can enhance) */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; width: 300px; border-radius: 8px; text-align: center; }
+        .modal-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
+        .modal textarea { width: 100%; padding: 5px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -24,6 +30,7 @@
 <div class="container">
     <div class="dashboard-buttons">
         <button id="addMedicineBtn">Add Medicine</button>
+        <button id="expiredBtn">View Expired Medicines</button>
     </div>
 
     <div class="inventory-table">
@@ -89,6 +96,18 @@
     </div>
 </div>
 
+<!-- Expiry Reason Modal -->
+<div id="reasonModal" class="modal">
+    <div class="modal-content">
+        <h3>Reason for Expiry</h3>
+        <textarea id="expiryReason" placeholder="Enter reason..." rows="3"></textarea>
+        <div class="modal-buttons">
+            <button id="confirmReasonBtn">Confirm</button>
+            <button id="cancelReasonBtn">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const modal = document.getElementById('medicineModal');
     const btn = document.getElementById('addMedicineBtn');
@@ -100,6 +119,13 @@
     const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
     const searchInput = document.getElementById('searchInput');
     const sortSelect = document.getElementById('sortSelect');
+
+    // Reason Modal
+    const reasonModal = document.getElementById('reasonModal');
+    const confirmReasonBtn = document.getElementById('confirmReasonBtn');
+    const cancelReasonBtn = document.getElementById('cancelReasonBtn');
+    let currentExpireID = null;
+    let currentExpireBrand = null;
 
     let medicines = [];
     let modalMode = 'add';
@@ -113,6 +139,7 @@
     window.onclick = e => {
         if(e.target === modal) modal.style.display = 'none';
         if(e.target === deleteModal) deleteModal.style.display = 'none';
+        if(e.target === reasonModal) reasonModal.style.display = 'none';
     };
     window.onload = fetchMedicines;
 
@@ -248,19 +275,40 @@
         }).catch(err=>showToast('Failed to delete medicine','error'));
     }
 
-    function renderTable(data=medicines) {
-        medicineTable.innerHTML='';
-        data.forEach(m=>{
-            const today = new Date().toISOString().split('T')[0];
+    function renderTable(data = medicines) {
+        medicineTable.innerHTML = '';
+        const today = new Date().toISOString().split('T')[0];
+
+        data.forEach(m => {
             const expiryDate = m.expiry.split('T')[0];
-            let statusText='', statusClass='';
-            if(expiryDate<today){ statusText='Expired'; statusClass='status-expired'; }
-            else if(m.quantity===0){ statusText='Out of Stock'; statusClass='status-out'; }
-            else if(m.quantity<=5){ statusText='Low Stock'; statusClass='status-low'; }
-            else { statusText='In Stock'; statusClass='status-in'; }
+            let statusText = '', statusClass = '';
+
+            if (expiryDate < today) {
+                statusText = 'Expired';
+                statusClass = 'status-expired';
+            } else if (m.quantity === 0) {
+                statusText = 'Out of Stock';
+                statusClass = 'status-out';
+            } else if (m.quantity <= 5) {
+                statusText = 'Low Stock';
+                statusClass = 'status-low';
+            } else {
+                statusText = 'In Stock';
+                statusClass = 'status-in';
+            }
+
+            // --- Action buttons ---
+            let actions = `
+            <button class="update-btn" onclick="openModal('update','${m.medicineID}','${m.brand}')"> ✏️ </button>
+            <button class="delete-btn" onclick="showDeleteModal('${m.medicineID}','${m.brand}')"> 🗑️ </button>
+        `;
+
+            if (expiryDate < today) {
+                actions += `<button class="expired-btn" onclick="moveToExpired('${m.medicineID}','${m.brand}')">Move to Expired</button>`;
+            }
 
             const row = medicineTable.insertRow();
-            row.innerHTML=`
+            row.innerHTML = `
             <td>${m.medicineID}</td>
             <td>${m.name}</td>
             <td>${m.brand}</td>
@@ -268,10 +316,8 @@
             <td>${m.quantity}</td>
             <td>${expiryDate}</td>
             <td class="${statusClass}">${statusText}</td>
-            <td>
-                <button class="update-btn" onclick="openModal('update','${m.medicineID}','${m.brand}')"> ✏️ </button>
-                <button class="delete-btn" onclick="showDeleteModal('${m.medicineID}','${m.brand}')"> 🗑️ </button>
-            </td>`;
+            <td>${actions}</td>
+        `;
         });
     }
 
@@ -284,6 +330,39 @@
             else if(m.quantity<=5) showToast(`Medicine "${m.name}" (Brand: ${m.brand}) is low in stock!`,'low');
         });
     }
+
+    // --- Expired modal functions ---
+    function moveToExpired(medicineID, brand) {
+        currentExpireID = medicineID;
+        currentExpireBrand = brand;
+        document.getElementById('expiryReason').value = '';
+        reasonModal.style.display = 'flex';
+    }
+
+    confirmReasonBtn.onclick = () => {
+        const reason = document.getElementById('expiryReason').value.trim();
+        if(!reason) { showToast('Please enter a reason!', 'low'); return; }
+
+        fetch(`http://localhost:8080/api/medicines/moveExpired?medicineID=${encodeURIComponent(currentExpireID)}&brand=${encodeURIComponent(currentExpireBrand)}&reason=${encodeURIComponent(reason)}`, {
+            method: 'POST'
+        })
+            .then(res => {
+                if(res.ok){
+                    showToast('Medicine moved to expired table','success');
+                    fetchMedicines();
+                } else showToast('Failed to move medicine','error');
+                reasonModal.style.display = 'none';
+            })
+            .catch(err => {
+                showToast('Error moving medicine','error');
+                reasonModal.style.display = 'none';
+            });
+    };
+
+    cancelReasonBtn.onclick = () => {
+        reasonModal.style.display = 'none';
+        showToast('Cancelled moving medicine','info');
+    };
 
     // --- Search functionality ---
     searchInput.addEventListener('input', () => {
@@ -300,10 +379,14 @@
         else if(value === 'expiryAsc') medicines.sort((a,b) => new Date(a.expiry) - new Date(b.expiry));
         else if(value === 'expiryDesc') medicines.sort((a,b) => new Date(b.expiry) - new Date(a.expiry));
 
-        // Apply search filter after sorting
         const filter = searchInput.value.toLowerCase();
         const filtered = medicines.filter(m => m.name.toLowerCase().includes(filter));
         renderTable(filtered);
+    };
+
+    //expired view
+    document.getElementById('expiredBtn').onclick = () => {
+        window.location.href = 'expired.html';
     };
 </script>
 

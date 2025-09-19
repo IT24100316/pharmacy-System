@@ -1,26 +1,28 @@
 package com.system.stock.management.service;
 
 import com.system.stock.management.dto.MedicineDTO;
+import com.system.stock.management.entity.ExpiredMedicine;
 import com.system.stock.management.entity.Medicine;
+import com.system.stock.management.repository.ExpiredMedicineRepository;
 import com.system.stock.management.repository.MedicineRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class MedicineService {
 
-    private final MedicineRepository repository;
+    @Autowired
+    private MedicineRepository medicineRepository;
 
-    public MedicineService(MedicineRepository repository) {
-        this.repository = repository;
-    }
+    @Autowired
+    private ExpiredMedicineRepository expiredRepository;
 
     // ✅ Save medicine with duplicate check
     public Medicine saveMedicine(Medicine medicine) {
-        Optional<Medicine> existing = repository.findByMedicineIDAndBrand(
+        Optional<Medicine> existing = medicineRepository.findByMedicineIDAndBrand(
                 medicine.getMedicineID(), medicine.getBrand());
 
         if (existing.isPresent()) {
@@ -34,26 +36,27 @@ public class MedicineService {
             medicine.setStatus("In Stock");
         }
 
-        return repository.save(medicine);
+        return medicineRepository.save(medicine);
     }
 
     // ✅ Fetch all medicines
     public List<Medicine> getAllMedicines() {
-        return repository.findAll();
+        return medicineRepository.findAll();
     }
 
     // ✅ Delete medicine by ID + Brand
     public boolean deleteMedicine(String medicineID, String brand) {
-        Optional<Medicine> med = repository.findByMedicineIDAndBrand(medicineID, brand);
+        Optional<Medicine> med = medicineRepository.findByMedicineIDAndBrand(medicineID, brand);
         if (med.isPresent()) {
-            repository.delete(med.get());
+            medicineRepository.delete(med.get());
             return true;
         }
         return false;
     }
 
+    // ✅ Update medicine
     public Medicine updateMedicine(MedicineDTO dto) {
-        Optional<Medicine> optional = repository.findByMedicineIDAndBrand(dto.getMedicineID(), dto.getBrand());
+        Optional<Medicine> optional = medicineRepository.findByMedicineIDAndBrand(dto.getMedicineID(), dto.getBrand());
         if (optional.isEmpty()) {
             throw new RuntimeException("Medicine not found");
         }
@@ -65,9 +68,22 @@ public class MedicineService {
         medicine.setExpiry(dto.getExpiry());
         medicine.setStatus(dto.getQuantity() > 0 ? "In Stock" : "Out of Stock");
 
-        return repository.save(medicine);
+        return medicineRepository.save(medicine);
     }
 
+    // ✅ Move expired medicine
+    public void moveToExpired(String medicineID, String brand, String reason) {
+        Medicine med = medicineRepository.findByMedicineIDAndBrand(medicineID, brand)
+                .orElseThrow(() -> new RuntimeException("Medicine not found"));
 
+        ExpiredMedicine expired = new ExpiredMedicine();
+        expired.setMedicineID(med.getMedicineID());
+        expired.setName(med.getName());
+        expired.setBrand(med.getBrand());
+        expired.setExpiry(med.getExpiry());
+        expired.setReason(reason);
 
+        expiredRepository.save(expired); // save to expired table
+        medicineRepository.delete(med);   // remove from main table
+    }
 }
