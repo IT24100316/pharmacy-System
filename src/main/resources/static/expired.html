@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expired Medicines</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/expired.css">
+</head>
+<body>
+<header>Expired Medicines</header>
+
+<main class="container">
+  <button class="back-btn" onclick="window.location.href='index.html'">← Back to Dashboard</button>
+
+  <section class="expired-section">
+    <table id="expiredTable">
+      <thead>
+      <tr>
+        <th>Medicine ID</th>
+        <th>Name</th>
+        <th>Brand</th>
+        <th>Expiry Date</th>
+        <th>Reason</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr><td colspan="5" class="loading-msg">Loading expired medicines...</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+  const expiredTable = document.querySelector('#expiredTable tbody');
+
+  async function fetchExpiredMedicines() {
+    try {
+      const response = await fetch('http://localhost:8080/api/medicines/expired');
+      if (!response.ok) throw new Error('Failed to fetch data');
+
+      const data = await response.json();
+      renderTable(data);
+    } catch (error) {
+      expiredTable.innerHTML = `<tr><td colspan="5" class="error-msg">⚠ Could not load expired medicines.</td></tr>`;
+      console.error('Error fetching expired medicines:', error);
+    }
+  }
+
+  function renderTable(data) {
+    expiredTable.innerHTML = '';
+
+    if (data.length === 0) {
+      expiredTable.innerHTML = `<tr><td colspan="5" class="empty-msg">✅ No expired medicines found</td></tr>`;
+      return;
+    }
+
+    data.forEach(m => {
+      const row = document.createElement('tr');
+
+      const idCell = document.createElement('td');
+      idCell.textContent = m.medicineID;
+      row.appendChild(idCell);
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = m.name;
+      row.appendChild(nameCell);
+
+      const brandCell = document.createElement('td');
+      brandCell.textContent = m.brand;
+      row.appendChild(brandCell);
+
+      const expiryCell = document.createElement('td');
+      expiryCell.textContent = m.expiry?.split('T')[0] || 'N/A';
+      row.appendChild(expiryCell);
+
+      const reasonCell = document.createElement('td');
+      reasonCell.textContent = m.reason;
+      row.appendChild(reasonCell);
+
+      expiredTable.appendChild(row);
+    });
+  }
+
+  window.onload = fetchExpiredMedicines;
+</script>
+</body>
+</html>
