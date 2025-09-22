@@ -4,21 +4,25 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "expired_medicines")
 public class ExpiredMedicine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // primary key for table
+    @Column(name = "expireID")
+    private Integer expireID; // PK, auto-increment
 
-    private String medicineID;
+    @Column(nullable = false)
+    private String medicineID; // just store medicineID as text
+
     private String name;
     private String brand;
     private LocalDate expiry;
     private String reason;
 
-    // ✅ Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // Getters and Setters
+    public Integer getExpireID() { return expireID; }
+    public void setExpireID(Integer expireID) { this.expireID = expireID; }
 
     public String getMedicineID() { return medicineID; }
     public void setMedicineID(String medicineID) { this.medicineID = medicineID; }

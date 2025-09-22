@@ -1,6 +1,7 @@
 package com.system.stock.management.controller;
 
 import com.system.stock.management.dto.MedicineDTO;
+import com.system.stock.management.dto.MedicineSalesDTO;
 import com.system.stock.management.entity.ExpiredMedicine;
 import com.system.stock.management.entity.Medicine;
 import com.system.stock.management.repository.ExpiredMedicineRepository;
@@ -12,8 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/medicines")
 @CrossOrigin(origins = "*")
+@RequestMapping("/api/medicines")
 public class MedicineController {
 
     private final MedicineService service;
@@ -24,13 +25,13 @@ public class MedicineController {
         this.expiredRepository = expiredRepository;
     }
 
-    // ✅ Get all medicines
+    // Get all medicines
     @GetMapping
     public List<Medicine> getAllMedicines() {
         return service.getAllMedicines();
     }
 
-    // ✅ Add medicine using DTO
+    // Add medicine using DTO
     @PostMapping
     public ResponseEntity<?> addMedicine(@RequestBody MedicineDTO dto) {
         try {
@@ -48,19 +49,19 @@ public class MedicineController {
         }
     }
 
-    // ✅ Delete medicine by ID + Brand
+    // Delete medicine by medicineID only
     @DeleteMapping
-    public ResponseEntity<?> deleteMedicine(@RequestParam String medicineID, @RequestParam String brand) {
-        boolean deleted = service.deleteMedicine(medicineID, brand);
+    public ResponseEntity<?> deleteMedicine(@RequestParam String medicineID) {
+        boolean deleted = service.deleteMedicine(medicineID);
         if (deleted) {
             return ResponseEntity.ok("Medicine deleted successfully!");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Medicine with given ID and Brand not found!");
+                    .body("Medicine with given ID not found!");
         }
     }
 
-    // ✅ Update medicine
+    // Update medicine
     @PutMapping
     public ResponseEntity<?> updateMedicine(@RequestBody MedicineDTO dto) {
         try {
@@ -71,20 +72,19 @@ public class MedicineController {
         }
     }
 
-    // ✅ Move medicine to expired
+    // Move medicine to expired
     @PostMapping("/moveExpired")
     public ResponseEntity<?> moveToExpired(@RequestParam String medicineID,
-                                           @RequestParam String brand,
                                            @RequestParam String reason) {
         try {
-            service.moveToExpired(medicineID, brand, reason);
+            service.moveToExpired(medicineID, reason);
             return ResponseEntity.ok("Medicine moved to expired table successfully");
         } catch(RuntimeException e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // ✅ Get all expired medicines
+    // Get all expired medicines
     @GetMapping("/expired")
     public List<ExpiredMedicine> getExpiredMedicines() {
         return expiredRepository.findAll();

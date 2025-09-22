@@ -31,6 +31,7 @@
     <div class="dashboard-buttons">
         <button id="addMedicineBtn">Add Medicine</button>
         <button id="expiredBtn">View Expired Medicines</button>
+        <button id="mostSellingBtn">Most Selling Medicines Report</button>
     </div>
 
     <div class="inventory-table">
@@ -202,6 +203,7 @@
         else if(modalMode==='update') updateMedicine();
     };
 
+    // ======= UPDATED addMedicine() with frontend duplicate check =======
     function addMedicine() {
         const dto = {
             medicineID: document.getElementById('medicineID').value.trim(),
@@ -211,9 +213,19 @@
             quantity: parseInt(document.getElementById('quantity').value),
             expiry: document.getElementById('expiry').value
         };
+
         if(!dto.medicineID || !dto.name || !dto.brand || isNaN(dto.price) || isNaN(dto.quantity) || !dto.expiry) {
-            showToast('Please fill all fields correctly','low'); return;
+            showToast('Please fill all fields correctly','low');
+            return;
         }
+
+        // FRONTEND DUPLICATE CHECK: same name + same brand
+        const duplicate = medicines.find(m => m.name.toLowerCase() === dto.name.toLowerCase() && m.brand.toLowerCase() === dto.brand.toLowerCase());
+        if(duplicate) {
+            showToast(`Medicine "${dto.name}" with brand "${dto.brand}" already exists!`, 'error');
+            return;
+        }
+
         fetch('http://localhost:8080/api/medicines',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
@@ -297,7 +309,6 @@
                 statusClass = 'status-in';
             }
 
-            // --- Action buttons ---
             let actions = `
             <button class="update-btn" onclick="openModal('update','${m.medicineID}','${m.brand}')"> ✏️ </button>
             <button class="delete-btn" onclick="showDeleteModal('${m.medicineID}','${m.brand}')"> 🗑️ </button>
@@ -387,6 +398,11 @@
     //expired view
     document.getElementById('expiredBtn').onclick = () => {
         window.location.href = 'expired.html';
+    };
+
+    //most selling button
+    document.getElementById('mostSellingBtn').onclick = () => {
+        window.location.href = 'mostSellingReport.html';
     };
 </script>
 

@@ -8,10 +8,9 @@ import java.time.LocalDate;
 public class Medicine {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "medicine_id", nullable = false, unique = true)
+    private String medicineID;  // <-- Now this is the PRIMARY KEY
 
-    private String medicineID;
     private String name;
     private String brand;
     private double price;
@@ -20,8 +19,6 @@ public class Medicine {
     private String status;
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
     public String getMedicineID() { return medicineID; }
     public void setMedicineID(String medicineID) { this.medicineID = medicineID; }
     public String getName() { return name; }

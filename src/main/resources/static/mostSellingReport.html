@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Most Selling Medicines Report</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    #chartContainer { width: 80%; max-width: 800px; margin: 0 auto 30px; }
+    table { width: 80%; margin: 0 auto; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f4f4f4; }
+    #backBtn { margin: 20px auto; display: block; padding: 10px 20px; cursor: pointer; }
+    #periodSelect { margin: 20px auto; display: block; padding: 5px 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<h1>Most Selling Medicines Report</h1>
+
+<!-- Period Selection -->
+<select id="periodSelect">
+  <option value="week">Last Week</option>
+  <option value="month">Last Month</option>
+  <option value="year">Last Year</option>
+</select>
+
+<div id="chartContainer">
+  <canvas id="salesChart"></canvas>
+</div>
+
+<table>
+  <thead>
+  <tr>
+    <th>Medicine ID</th>
+    <th>Name</th>
+    <th>Brand</th>
+    <th>Total Sold</th>
+  </tr>
+  </thead>
+  <tbody id="reportTableBody"></tbody>
+</table>
+
+<button id="backBtn">Back to Dashboard</button>
+
+<script>
+  let chartInstance = null;
+  const tableBody = document.getElementById('reportTableBody');
+  const periodSelect = document.getElementById('periodSelect');
+
+  function fetchReport(period) {
+    const url = `http://localhost:8080/report/mostSelling?period=${period}`;
+
+    fetch(url)
+            .then(res => res.json())
+            .then(data => {
+              tableBody.innerHTML = '';
+              const labels = [];
+              const totals = [];
+
+              data.forEach(item => {
+                labels.push(`${item.medicineID} (${item.brand})`);
+                totals.push(item.totalSold);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${item.medicineID}</td>
+            <td>${item.name}</td>
+            <td>${item.brand}</td>
+            <td>${item.totalSold}</td>
+          `;
+                tableBody.appendChild(row);
+              });
+
+              const ctx = document.getElementById('salesChart').getContext('2d');
+              if(chartInstance) chartInstance.destroy();
+              chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: labels,
+                  datasets: [{
+                    label: 'Total Sold',
+                    data: totals,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true, stepSize: 1 } }
+                }
+              });
+            })
+            .catch(err => console.error('Error fetching report:', err));
+  }
+
+  // Initial load (use first option)
+  fetchReport(periodSelect.value);
+
+  // Update on change
+  periodSelect.addEventListener('change', () => {
+    fetchReport(periodSelect.value);
+  });
+
+  // Back button
+  document.getElementById('backBtn').onclick = () => {
+    window.location.href = 'index.html';
+  };
+</script>
+
+</body>
+</html>
